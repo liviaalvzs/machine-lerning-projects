@@ -1,3 +1,4 @@
+import re
 import nltk
 import sys
 
@@ -15,11 +16,12 @@ V -> "smiled" | "tell" | "were"
 """
 
 NONTERMINALS = """
-S -> NP VP
+S -> NP VP | S Conj S
 NP -> N | Det N | Det Adj N | Adj NP | NP PP
-VP -> V | V NP | V NP PP | V PP
+VP -> V | V NP | V NP PP | V PP | VP Conj VP
 PP -> P NP
 """
+
 
 grammar = nltk.CFG.fromstring(NONTERMINALS + TERMINALS)
 parser = nltk.ChartParser(grammar)
@@ -61,18 +63,21 @@ def preprocess(sentence):
     Lowercase + remove words without alphabetic chars
     """
     words = sentence.lower().split()
-    return [w for w in words if any(c.isalpha() for c in w)]
-
+    cleaned = []
+    for w in words:
+        w = re.sub(r'[^a-z]', '', w)  # remove non aphabetic chars
+        if any(c.isalpha() for c in w):
+            cleaned.append(w)
+    return cleaned
 
 def np_chunk(tree):
     """
     Return a list of all noun phrase chunks in the sentence tree.
     """
     chunks = []
-    for subtree in tree.subtrees():
-        if subtree.label() == "NP":
-            if not any(child.label() == "NP" for child in subtree if isinstance(child, nltk.Tree)):
-                chunks.append(subtree)
+    for subtree in tree.subtrees(lambda t: t.label() == "NP"):
+        if not any(desc.label() == "NP" for desc in subtree.subtrees(lambda t: t != subtree)):
+            chunks.append(subtree)
     return chunks
 
 
