@@ -1,1 +1,4 @@
-google_training/ML_Debugging_is_Hard.ipynb
+algorithms/hill_climbing.ipynb
+*/__pycache__
+traffic-model/*
+.DS_Store
